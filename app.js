@@ -5,7 +5,12 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIO(server);
+const io = socketIO(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
 
 const PORT = process.env.PORT || 8282;
 
@@ -15,7 +20,7 @@ const users = new Map();
 const chatRooms = new Map();
 
 io.on('connection', (socket) => {
-  console.log('New user connected');
+  console.log('New user connected:', socket.id);
 
   socket.on('new user', (data, callback) => {
     if (users.has(data.username)) {
@@ -23,7 +28,6 @@ io.on('connection', (socket) => {
     } else {
       callback({ success: true });
       socket.username = data.username;
-      socket.userColor = getRandomColor();
       users.set(data.username, socket);
       updateOnlineUsers();
       socket.join('general');
@@ -49,7 +53,6 @@ io.on('connection', (socket) => {
   socket.on('chat message', (msg) => {
     io.to(msg.room).emit('chat message', {
       username: socket.username,
-      color: socket.userColor,
       message: msg.message,
       room: msg.room
     });
@@ -87,10 +90,6 @@ function updateOnlineUsers() {
 
 function updateRoomUsers(room) {
   io.to(room).emit('room users', { room, users: chatRooms.get(room) || [] });
-}
-
-function getRandomColor() {
-  return '#' + Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0');
 }
 
 server.listen(PORT, () => {
