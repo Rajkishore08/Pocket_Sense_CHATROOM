@@ -23,6 +23,7 @@ io.on('connection', (socket) => {
   console.log('New user connected:', socket.id);
 
   socket.on('new user', (data, callback) => {
+    console.log('New user attempt:', data.username);
     if (users.has(data.username)) {
       callback({ success: false });
     } else {
@@ -37,6 +38,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.username);
     if (socket.username) {
       users.delete(socket.username);
       updateOnlineUsers();
@@ -51,6 +53,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('chat message', (msg) => {
+    console.log('Message received:', msg);
     io.to(msg.room).emit('chat message', {
       username: socket.username,
       message: msg.message,
@@ -67,12 +70,14 @@ io.on('connection', (socket) => {
   });
 
   socket.on('join room', (room) => {
+    console.log(`${socket.username} joining room:`, room);
     socket.join(room);
     chatRooms.set(room, (chatRooms.get(room) || []).concat(socket.username));
     updateRoomUsers(room);
   });
 
   socket.on('leave room', (room) => {
+    console.log(`${socket.username} leaving room:`, room);
     socket.leave(room);
     const users = chatRooms.get(room) || [];
     const index = users.indexOf(socket.username);
@@ -85,13 +90,19 @@ io.on('connection', (socket) => {
 });
 
 function updateOnlineUsers() {
-  io.emit('online users', Array.from(users.keys()));
+  const userList = Array.from(users.keys());
+  console.log('Updating online users:', userList);
+  io.emit('online users', userList);
 }
 
 function updateRoomUsers(room) {
-  io.to(room).emit('room users', { room, users: chatRooms.get(room) || [] });
+  const roomUsers = chatRooms.get(room) || [];
+  console.log(`Updating users for room ${room}:`, roomUsers);
+  io.to(room).emit('room users', { room, users: roomUsers });
 }
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+module.exports = app;
