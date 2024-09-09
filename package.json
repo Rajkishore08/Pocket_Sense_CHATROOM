@@ -1,6 +1,7 @@
 {
   "name": "pocket-sense-chat",
   "version": "1.0.0",
+  "description": "A chat application using Socket.IO and Express",
   "main": "app.js",
   "scripts": {
     "start": "node app.js"
