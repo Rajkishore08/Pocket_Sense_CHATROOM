@@ -2,8 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM fully loaded');
 
     const socket = io({
-        transports: ['websocket'],
-        upgrade: false
+        transports: ['websocket', 'polling'],
+        forceNew: true
     });
 
     socket.on('connect', () => {
@@ -123,33 +123,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    let typingTimer;
     const input = document.getElementById('m');
-    input.addEventListener('input', () => {
-        clearTimeout(typingTimer);
-        socket.emit('typing', currentRoom);
-        typingTimer = setTimeout(() => socket.emit('stop typing', currentRoom), 1000);
-    });
-
     input.addEventListener('keypress', (event) => {
         if (event.key === 'Enter') {
             sendMessage();
         }
     });
 
-    socket.on('typing', (data) => {
-        if (data.room === currentRoom) {
-            document.getElementById('typing').innerText = `${data.username} is typing...`;
-        }
-    });
-
-    socket.on('stop typing', (data) => {
-        if (data.room === currentRoom) {
-            document.getElementById('typing').innerText = '';
-        }
-    });
-
-    // Expose joinRoom function globally
     window.joinRoom = joinRoom;
     window.sendMessage = sendMessage;
 });
